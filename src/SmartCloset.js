@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Container } from '@mui/material';
+import { Snackbar, Alert, Container } from '@mui/material';
 import Header from './components/Header';
 import UploadDialog from './components/UploadDialog';
 import BottomNavigationBar from './components/BottomNavigationBar';
@@ -11,6 +11,8 @@ import MorePage from './pages/MorePage';
 function SmartCloset() {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [successMessage, setSuccessMessage] = useState(false);
 
   const handleClickOpen = () => setOpen(true);
   const handleClose = () => {
@@ -22,7 +24,10 @@ function SmartCloset() {
 
   const handleUpload = () => {
     if (file) {
-      console.log('File uploaded:', file);
+      // Simulate image upload
+      const imageUrl = URL.createObjectURL(file); // Create a temporary URL for the uploaded file
+      setUploadedImages((prevImages) => [...prevImages, imageUrl]);
+      setSuccessMessage(true); // Show success message
       handleClose();
     }
   };
@@ -42,10 +47,22 @@ function SmartCloset() {
           file={file}
         />
 
+        {/* Success Snackbar */}
+        <Snackbar
+          open={successMessage}
+          autoHideDuration={5000}
+          onClose={() => setSuccessMessage(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSuccessMessage(false)} severity="success" sx={{ width: '100%' }}>
+            Image uploaded successfully!
+          </Alert>
+        </Snackbar>
+
         {/* Routes for Page Navigation */}
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/closet" element={<ClosetPage />} />
+          <Route path="/" element={<HomePage onAddClick={handleClickOpen} />} />
+          <Route path="/closet" element={<ClosetPage uploadedImages={uploadedImages} />} />
           <Route path="/more" element={<MorePage />} />
         </Routes>
 

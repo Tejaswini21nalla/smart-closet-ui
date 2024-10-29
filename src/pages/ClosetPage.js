@@ -1,16 +1,29 @@
 import React from 'react';
-import { Typography } from '@mui/material';
+import { Box, Typography, Grid, Paper } from '@mui/material';
 
-function ClosetPage() {
+function ClosetPage({ uploadedImages }) {
   return (
-    <div>
+    <Box sx={{ padding: '20px', textAlign: 'center' }}>
       <Typography variant="h4" gutterBottom>
-        Closet
+        Your Closet
       </Typography>
-      <Typography color="textSecondary">
-        Here is where you can view and manage all your closet items.
-      </Typography>
-    </div>
+
+      {uploadedImages.length === 0 ? (
+        <Typography color="textSecondary">
+          There are no items in the closet yet.
+        </Typography>
+      ) : (
+        <Grid container spacing={2} justifyContent="center">
+          {uploadedImages.map((image, index) => (
+            <Grid item key={index}>
+              <Paper elevation={3} sx={{ padding: '10px' }}>
+                <img src={image} alt={`Uploaded item ${index + 1}`} style={{ width: '150px', height: '150px', objectFit: 'cover' }} />
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
   );
 }
 
