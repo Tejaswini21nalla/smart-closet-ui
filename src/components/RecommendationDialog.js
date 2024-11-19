@@ -14,6 +14,7 @@ import {
   Paper,
   Typography,
   styled,
+  Grid,
 } from '@mui/material';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -28,26 +29,33 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 200,
 }));
 
+const RecommendationImage = styled('img')({
+  width: '100%',
+  height: '200px',
+  objectFit: 'cover',
+  borderRadius: '8px',
+});
+
 const attributeOptions = {
   sleeve_length: {
-    "Sleeveless": "Sleeveless",
-    "Short Sleeve": "Short Sleeve",
-    "Medium Sleeve": "Medium Sleeve",
-    "Long Sleeve": "Long Sleeve",
+    "sleeveless": "Sleeveless",
+    "short-sleeve": "Short Sleeve",
+    "medium-sleeve": "Medium Sleeve",
+    "long-sleeve": "Long Sleeve",
   },
   collar_type: {
-    "V-Shape": "V-Shape",
-    "Square": "Square",
-    "Round": "Round",
-    "Standing": "Standing",
-    "Lapel": "Lapel",
-    "Suspenders": "Suspenders",
+    "V-shape": "V-Shape",
+    "square": "Square",
+    "round": "Round",
+    "standing": "Standing",
+    "lapel": "Lapel",
+    "suspenders": "Suspenders",
   },
-  lower_clothing_length: {
-    "Three Point": "Three Point",
-    "Medium Short": "Medium Short",
-    "Three Quarter": "Three Quarter",
-    "Long": "Long",
+  lower_length: {
+    "three-point": "Three Point",
+    "medium short": "Medium Short",
+    "three-quarter": "Three Quarter",
+    "long": "Long",
   },
   hat: {
     "no hat": "No Hat",
@@ -72,12 +80,15 @@ function RecommendationDialog({ open, onClose }) {
   const [attributes, setAttributes] = useState({
     sleeve_length: '',
     collar_type: '',
-    lower_clothing_length: '',
+    lower_length: '',
     hat: '',
     neckwear: '',
     outer_clothing_cardigan: '',
     upper_clothing_covering_navel: ''
   });
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -88,28 +99,38 @@ function RecommendationDialog({ open, onClose }) {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch('http://localhost:5000/recommend', {
+      // Convert empty values to 'NA'
+      const requestBody = Object.fromEntries(
+        Object.entries(attributes).map(([key, value]) => [key, value || 'NA'])
+      );
+
+      const response = await fetch('http://127.0.0.1:5000/recommend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          attributes: Object.fromEntries(
-            Object.entries(attributes).map(([key, value]) => [key, value || 'NA'])
-          )
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get recommendations');
+        throw new Error(`Failed to get recommendations: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log(data);
-      onClose();
+      if (data.success && data.recommendations) {
+        setRecommendations(data.recommendations);
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (error) {
       console.error('Error:', error);
+      setError(error.message);
+      setRecommendations([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -121,7 +142,7 @@ function RecommendationDialog({ open, onClose }) {
   const attributeLabels = {
     sleeve_length: 'Sleeve Length',
     collar_type: 'Collar Type',
-    lower_clothing_length: 'Lower Clothing Length',
+    lower_length: 'Lower Clothing Length',
     hat: 'Hat',
     neckwear: 'Neckwear',
     outer_clothing_cardigan: 'Cardigan',
@@ -129,7 +150,7 @@ function RecommendationDialog({ open, onClose }) {
   };
 
   return (
-    <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleCancel} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pb: 1, textAlign: 'center', typography: 'h5', fontWeight: 'bold' }}>
         Get Outfit Recommendations
       </DialogTitle>
@@ -137,6 +158,11 @@ function RecommendationDialog({ open, onClose }) {
         <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', color: 'text.secondary' }}>
           Select your preferred attributes for outfit recommendations
         </Typography>
+        {error && (
+          <Typography color="error" sx={{ mb: 2, textAlign: 'center' }}>
+            {error}
+          </Typography>
+        )}
         <StyledPaper elevation={0}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             {Object.keys(attributes).map((attr) => (
@@ -161,25 +187,44 @@ function RecommendationDialog({ open, onClose }) {
             ))}
           </Box>
         </StyledPaper>
+
+        {recommendations.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+              Recommended Outfits
+            </Typography>
+            <Grid container spacing={2}>
+              {recommendations.map((recommendation, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Paper elevation={3} sx={{ p: 2 }}>
+                    <RecommendationImage
+                      src={`data:image/jpeg;base64,${recommendation.image}`}
+                      alt={`Recommendation ${index + 1}`}
+                    />
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'center' }}>
-        <Button onClick={handleCancel} color="secondary" variant="outlined" sx={{ borderRadius: 2, minWidth: 120 }}>
+        <Button 
+          onClick={handleCancel} 
+          color="secondary" 
+          variant="outlined" 
+          sx={{ borderRadius: 2, minWidth: 120 }}
+        >
           Cancel
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          color="primary" 
+        <Button
+          onClick={handleSubmit}
+          color="primary"
           variant="contained"
-          sx={{
-            borderRadius: 2, 
-            minWidth: 120,
-            backgroundColor: '#000',
-            '&:hover': {
-              backgroundColor: '#333',
-            },
-          }}
+          sx={{ borderRadius: 2, minWidth: 120 }}
+          disabled={loading}
         >
-          Get Recommendations
+          {loading ? 'Getting Recommendations...' : 'Get Recommendations'}
         </Button>
       </DialogActions>
     </Dialog>
