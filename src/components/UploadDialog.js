@@ -203,7 +203,20 @@ function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
           </Grid>
         ))}
       </Grid>
-      <Typography color="warning.main" sx={{ mt: 2, textAlign: 'center' }}>
+      <Typography 
+        variant="h6" 
+        color="warning.main" 
+        sx={{ 
+          mt: 3,
+          mb: 2, 
+          textAlign: 'center',
+          fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
+          fontWeight: 500,
+          fontFamily: "'Playfair Display', serif",
+          color: '#ed6c02',
+          letterSpacing: '0.5px'
+        }}
+      >
         Would you still like to add this item to your closet?
       </Typography>
     </Box>
