@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Snackbar, Alert, Container } from '@mui/material';
 import Header from './components/Header';
@@ -11,10 +11,10 @@ import MorePage from './pages/MorePage';
 function SmartCloset() {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState(null);
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [successMessage, setSuccessMessage] = useState(false);
+  const [shouldRefreshCloset, setShouldRefreshCloset] = useState(false);
 
   const handleClickOpen = () => setOpen(true);
+  
   const handleClose = () => {
     setOpen(false);
     setFile(null);
@@ -22,39 +22,30 @@ function SmartCloset() {
 
   const handleFileChange = (event) => setFile(event.target.files[0]);
 
-  const handleUpload = () => {
-    if (file) {
-      // Simulate image upload
-      const imageUrl = URL.createObjectURL(file); // Create a temporary URL for the uploaded file
-      setUploadedImages((prevImages) => [...prevImages, imageUrl]);
-      setSuccessMessage(true); // Show success message
-      handleClose();
-    }
-  };
+  const handleItemAdded = useCallback(() => {
+    setShouldRefreshCloset(true);
+  }, []);
 
   return (
     <Router>
       <div>
-        {/* Header Component - Appears on all pages */}
         <Header onAddClick={handleClickOpen} />
-        
-        {/* Upload Dialog */}
         <UploadDialog
           open={open}
           onClose={handleClose}
           onFileChange={handleFileChange}
-          onUpload={handleUpload}
           file={file}
+          onItemAdded={handleItemAdded}
         />
 
         {/* Success Snackbar */}
         <Snackbar
-          open={successMessage}
+          open={false}
           autoHideDuration={5000}
-          onClose={() => setSuccessMessage(false)}
+          onClose={() => false}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
-          <Alert onClose={() => setSuccessMessage(false)} severity="success" sx={{ width: '100%' }}>
+          <Alert onClose={() => false} severity="success" sx={{ width: '100%' }}>
             Image uploaded successfully!
           </Alert>
         </Snackbar>
@@ -62,7 +53,15 @@ function SmartCloset() {
         {/* Routes for Page Navigation */}
         <Routes>
           <Route path="/" element={<HomePage onAddClick={handleClickOpen} />} />
-          <Route path="/closet" element={<ClosetPage uploadedImages={uploadedImages} />} />
+          <Route 
+            path="/closet" 
+            element={
+              <ClosetPage 
+                shouldRefresh={shouldRefreshCloset}
+                onRefreshComplete={() => setShouldRefreshCloset(false)}
+              />
+            } 
+          />
           <Route path="/more" element={<MorePage />} />
         </Routes>
 
