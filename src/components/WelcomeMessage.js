@@ -15,7 +15,7 @@ function WelcomeMessage({ onAddClick }) {
       <Typography color="textSecondary">
         Easily manage your wardrobe and find the perfect outfit.
       </Typography>
-      {isMobile && (
+      
         <Button
           variant="contained"
           color="primary"
@@ -25,7 +25,7 @@ function WelcomeMessage({ onAddClick }) {
         >
           Add Item
         </Button>
-      )}
+      
     </Paper>
   );
 }
