@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Grid, Paper, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
 
 function ClosetPage({ shouldRefresh, onRefreshComplete }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const fetchClosetItems = async () => {
     try {
@@ -14,21 +16,21 @@ function ClosetPage({ shouldRefresh, onRefreshComplete }) {
         throw new Error('Failed to fetch closet items');
       }
       const data = await response.json();
+      console.log('Fetched data:', data);
       setItems(data.items || []);
     } catch (error) {
       console.error('Error fetching closet items:', error);
       setError('Failed to load closet items');
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchClosetItems();
   }, []);
 
-  // Refresh when shouldRefresh changes
   useEffect(() => {
     if (shouldRefresh) {
       fetchClosetItems();
@@ -53,8 +55,20 @@ function ClosetPage({ shouldRefresh, onRefreshComplete }) {
   }
 
   return (
-    <Box sx={{ padding: '20px' }}>
-      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+    <Box sx={{ 
+      padding: isMobile ? '12px' : '20px',
+      maxWidth: '100%',
+      overflow: 'hidden'
+    }}>
+      <Typography 
+        variant={isMobile ? "h5" : "h4"} 
+        gutterBottom 
+        sx={{ 
+          textAlign: 'center', 
+          mb: isMobile ? 2 : 4,
+          fontSize: isMobile ? '1.5rem' : '2rem'
+        }}
+      >
         Your Closet
       </Typography>
 
@@ -63,35 +77,48 @@ function ClosetPage({ shouldRefresh, onRefreshComplete }) {
           There are no items in the closet yet.
         </Typography>
       ) : (
-        <Grid container spacing={3} justifyContent="center">
+        <Grid 
+          container 
+          spacing={isMobile ? 1 : 2}
+          sx={{
+            width: '100%',
+            margin: '0',
+            padding: isMobile ? '4px' : '8px',
+          }}
+        >
           {items.map((item, index) => (
-            <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
+            <Grid 
+              item 
+              key={index} 
+              xs={6} 
+              sm={4} 
+              md={3} 
+              lg={2}
+              sx={{
+                padding: isMobile ? '4px' : '8px',
+              }}
+            >
               <Paper 
-                elevation={3} 
+                elevation={2}
                 sx={{ 
-                  p: 2,
-                  height: '100%',
+                  width: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 1,
-                  transition: 'transform 0.2s',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                  }
+                  borderRadius: isMobile ? 1 : 2,
+                  overflow: 'hidden',
+                  height: '100%',
                 }}
               >
                 <Box
                   sx={{
-                    width: '100%',
-                    paddingTop: '100%',
                     position: 'relative',
-                    overflow: 'hidden',
-                    borderRadius: 1,
+                    paddingTop: '100%',
+                    width: '100%',
+                    backgroundColor: '#f5f5f5',
                   }}
                 >
                   <img
-                    src={item.image_url}
+                    src={`data:image/jpeg;base64,${item.image}`}
                     alt={`Closet item ${index + 1}`}
                     style={{
                       position: 'absolute',
@@ -103,15 +130,41 @@ function ClosetPage({ shouldRefresh, onRefreshComplete }) {
                     }}
                   />
                 </Box>
-                {item.attributes && (
-                  <Box sx={{ width: '100%', mt: 1 }}>
-                    {Object.entries(item.attributes).map(([key, value]) => (
-                      <Typography key={key} variant="body2" color="text.secondary">
+                {item.predictions && (
+                  <Box sx={{ 
+                    p: isMobile ? 0.5 : 1,
+                    backgroundColor: '#fff',
+                  }}>
+                    {Object.entries(item.predictions).map(([key, value]) => (
+                      <Typography 
+                        key={key} 
+                        variant="body2" 
+                        color="text.secondary" 
+                        sx={{ 
+                          fontSize: isMobile ? '0.7rem' : '0.8rem',
+                          lineHeight: isMobile ? 1.2 : 1.4,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          mb: 0.25,
+                        }}
+                      >
                         {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}:
                         {' '}
                         {value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </Typography>
                     ))}
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary" 
+                      sx={{ 
+                        display: 'block',
+                        fontSize: isMobile ? '0.6rem' : '0.7rem',
+                        mt: 0.5,
+                      }}
+                    >
+                      {new Date(item.timestamp).toLocaleDateString()}
+                    </Typography>
                   </Box>
                 )}
               </Paper>
