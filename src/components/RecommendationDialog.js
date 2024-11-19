@@ -139,6 +139,20 @@ function RecommendationDialog({ open, onClose }) {
     navigate('/');
   };
 
+  const handleReset = () => {
+    setRecommendations([]);
+    setAttributes({
+      sleeve_length: '',
+      collar_type: '',
+      lower_length: '',
+      hat: '',
+      neckwear: '',
+      outer_clothing_cardigan: '',
+      upper_clothing_covering_navel: ''
+    });
+    setError(null);
+  };
+
   const attributeLabels = {
     sleeve_length: 'Sleeve Length',
     collar_type: 'Collar Type',
@@ -217,15 +231,26 @@ function RecommendationDialog({ open, onClose }) {
         >
           Cancel
         </Button>
-        <Button
-          onClick={handleSubmit}
-          color="primary"
-          variant="contained"
-          sx={{ borderRadius: 2, minWidth: 120 }}
-          disabled={loading}
-        >
-          {loading ? 'Getting Recommendations...' : 'Get Recommendations'}
-        </Button>
+        {recommendations.length > 0 ? (
+          <Button
+            onClick={handleReset}
+            color="primary"
+            variant="contained"
+            sx={{ borderRadius: 2, minWidth: 120 }}
+          >
+            Reset
+          </Button>
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            color="primary"
+            variant="contained"
+            sx={{ borderRadius: 2, minWidth: 120 }}
+            disabled={loading}
+          >
+            {loading ? 'Getting Recommendations...' : 'Get Recommendations'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
