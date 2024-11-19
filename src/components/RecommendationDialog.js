@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
+  DialogContent,
+  DialogActions,
   Button,
   FormControl,
   InputLabel,
@@ -27,34 +28,55 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 200,
 }));
 
-const SLEEVE_OPTIONS = [
-  { value: "sleeveless", label: "Sleeveless" },
-  { value: "short-sleeve", label: "Short Sleeve" },
-  { value: "medium-sleeve", label: "Medium Sleeve" },
-  { value: "long-sleeve", label: "Long Sleeve" },
-];
-
-const COLLAR_OPTIONS = [
-  { value: "V-shape", label: "V-Shape" },
-  { value: "square", label: "Square" },
-  { value: "round", label: "Round" },
-  { value: "standing", label: "Standing" },
-  { value: "lapel", label: "Lapel" },
-  { value: "suspenders", label: "Suspenders" },
-];
-
-const LENGTH_OPTIONS = [
-  { value: "three-point", label: "Three Point" },
-  { value: "medium short", label: "Medium Short" },
-  { value: "three-quarter", label: "Three Quarter" },
-  { value: "long", label: "Long" },
-];
+const attributeOptions = {
+  sleeve_length: {
+    "Sleeveless": "Sleeveless",
+    "Short Sleeve": "Short Sleeve",
+    "Medium Sleeve": "Medium Sleeve",
+    "Long Sleeve": "Long Sleeve",
+  },
+  collar_type: {
+    "V-Shape": "V-Shape",
+    "Square": "Square",
+    "Round": "Round",
+    "Standing": "Standing",
+    "Lapel": "Lapel",
+    "Suspenders": "Suspenders",
+  },
+  lower_clothing_length: {
+    "Three Point": "Three Point",
+    "Medium Short": "Medium Short",
+    "Three Quarter": "Three Quarter",
+    "Long": "Long",
+  },
+  hat: {
+    "no hat": "No Hat",
+    "yes hat": "Has Hat",
+  },
+  neckwear: {
+    "no neckwear": "No Neckwear",
+    "yes neckwear": "Has Neckwear",
+  },
+  outer_clothing_cardigan: {
+    "yes cardigan": "Has Cardigan",
+    "no cardigan": "No Cardigan",
+  },
+  upper_clothing_covering_navel: {
+    "no": "Not Covering Navel",
+    "yes": "Covering Navel",
+  }
+};
 
 function RecommendationDialog({ open, onClose }) {
+  const navigate = useNavigate();
   const [attributes, setAttributes] = useState({
-    sleeve_length: "",
-    collar_type: "",
-    lower_length: "",
+    sleeve_length: '',
+    collar_type: '',
+    lower_clothing_length: '',
+    hat: '',
+    neckwear: '',
+    outer_clothing_cardigan: '',
+    upper_clothing_covering_navel: ''
   });
 
   const handleChange = (event) => {
@@ -66,20 +88,17 @@ function RecommendationDialog({ open, onClose }) {
   };
 
   const handleSubmit = async () => {
-    // Convert empty strings to "NA"
-    const finalAttributes = {
-      sleeve_length: attributes.sleeve_length || "NA",
-      collar_type: attributes.collar_type || "NA",
-      lower_length: attributes.lower_length || "NA",
-    };
-
     try {
-      const response = await fetch('http://127.0.0.1:5000/recommend', {
+      const response = await fetch('http://localhost:5000/recommend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(finalAttributes),
+        body: JSON.stringify({
+          attributes: Object.fromEntries(
+            Object.entries(attributes).map(([key, value]) => [key, value || 'NA'])
+          )
+        }),
       });
 
       if (!response.ok) {
@@ -87,28 +106,31 @@ function RecommendationDialog({ open, onClose }) {
       }
 
       const data = await response.json();
-      console.log('Recommendations:', data);
-      // Handle the recommendations data here
+      console.log(data);
       onClose();
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
+  const handleCancel = () => {
+    onClose();
+    navigate('/');
+  };
+
+  const attributeLabels = {
+    sleeve_length: 'Sleeve Length',
+    collar_type: 'Collar Type',
+    lower_clothing_length: 'Lower Clothing Length',
+    hat: 'Hat',
+    neckwear: 'Neckwear',
+    outer_clothing_cardigan: 'Cardigan',
+    upper_clothing_covering_navel: 'Navel Coverage'
+  };
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        style: {
-          borderRadius: 16,
-          padding: '16px',
-        },
-      }}
-    >
-      <DialogTitle sx={{ textAlign: 'center', typography: 'h5', fontWeight: 'bold' }}>
+    <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ pb: 1, textAlign: 'center', typography: 'h5', fontWeight: 'bold' }}>
         Get Outfit Recommendations
       </DialogTitle>
       <DialogContent>
@@ -116,80 +138,46 @@ function RecommendationDialog({ open, onClose }) {
           Select your preferred attributes for outfit recommendations
         </Typography>
         <StyledPaper elevation={0}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <StyledFormControl>
-              <InputLabel>Sleeve Length</InputLabel>
-              <Select
-                name="sleeve_length"
-                value={attributes.sleeve_length}
-                onChange={handleChange}
-                label="Sleeve Length"
-              >
-                <MenuItem value="">
-                  <em>Any</em>
-                </MenuItem>
-                {SLEEVE_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            {Object.keys(attributes).map((attr) => (
+              <StyledFormControl key={attr} fullWidth>
+                <InputLabel>{attributeLabels[attr]}</InputLabel>
+                <Select
+                  name={attr}
+                  value={attributes[attr]}
+                  onChange={handleChange}
+                  label={attributeLabels[attr]}
+                >
+                  <MenuItem value="">
+                    <em>Any</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </StyledFormControl>
-
-            <StyledFormControl>
-              <InputLabel>Collar Type</InputLabel>
-              <Select
-                name="collar_type"
-                value={attributes.collar_type}
-                onChange={handleChange}
-                label="Collar Type"
-              >
-                <MenuItem value="">
-                  <em>Any</em>
-                </MenuItem>
-                {COLLAR_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </StyledFormControl>
-
-            <StyledFormControl>
-              <InputLabel>Length</InputLabel>
-              <Select
-                name="lower_length"
-                value={attributes.lower_length}
-                onChange={handleChange}
-                label="Length"
-              >
-                <MenuItem value="">
-                  <em>Any</em>
-                </MenuItem>
-                {LENGTH_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </StyledFormControl>
+                  {Object.entries(attributeOptions[attr]).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </StyledFormControl>
+            ))}
           </Box>
         </StyledPaper>
       </DialogContent>
-      <DialogActions sx={{ justifyContent: 'center', p: 3 }}>
-        <Button 
-          onClick={onClose} 
-          color="secondary" 
-          variant="outlined"
-          sx={{ borderRadius: 2, minWidth: 120 }}
-        >
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'center' }}>
+        <Button onClick={handleCancel} color="secondary" variant="outlined" sx={{ borderRadius: 2, minWidth: 120 }}>
           Cancel
         </Button>
         <Button 
           onClick={handleSubmit} 
           color="primary" 
           variant="contained"
-          sx={{ borderRadius: 2, minWidth: 120 }}
+          sx={{
+            borderRadius: 2, 
+            minWidth: 120,
+            backgroundColor: '#000',
+            '&:hover': {
+              backgroundColor: '#333',
+            },
+          }}
         >
           Get Recommendations
         </Button>
