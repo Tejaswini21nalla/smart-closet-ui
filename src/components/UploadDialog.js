@@ -37,8 +37,16 @@ const PredictionLabel = styled(Box)({
 function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
   const [loading, setLoading] = useState(false);
   const [prediction, setPrediction] = useState(null);
+  const [similarItem, setSimilarItem] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const formatValue = (value) => {
+    if (typeof value !== 'string') return value;
+    return value.split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -53,6 +61,7 @@ function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
 
     setLoading(true);
     setPrediction(null);
+    setSimilarItem(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -69,30 +78,56 @@ function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
 
       const data = await response.json();
       console.log('Received prediction data:', data);
-      setPrediction(data);
+      
+      if (data.message && data.existing_item) {
+        setSimilarItem(data.existing_item);
+      } else if (data.success && data.predictions) {
+        setPrediction({
+          filename: data.filename,
+          predictions: data.predictions
+        });
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error:', error);
       setPrediction(null);
+      setSimilarItem(null);
       setLoading(false);
     }
   };
 
   const handleClose = async () => {
-    if (prediction) {
+    if (prediction && !similarItem) {
       setShowSuccess(true);
-      // Notify parent component that a new item was added
       if (onItemAdded) {
         onItemAdded();
       }
-      // Wait for the success message to be shown
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
     setPrediction(null);
+    setSimilarItem(null);
     setPreviewUrl(null);
     setShowSuccess(false);
     onClose();
   };
+
+  const renderPredictions = (predictions, title) => (
+    <Box sx={{ width: '100%' }}>
+      <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
+        {title}
+      </Typography>
+      {Object.entries(predictions).map(([key, value]) => (
+        <PredictionLabel key={key}>
+          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}:
+          </Typography>
+          <Typography variant="body1">
+            {formatValue(value)}
+          </Typography>
+        </PredictionLabel>
+      ))}
+    </Box>
+  );
 
   return (
     <>
@@ -103,11 +138,11 @@ function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
         fullWidth
       >
         <DialogTitle>
-          {prediction ? 'Prediction Results' : 'Upload Item'}
+          {similarItem ? 'Similar Item Found' : prediction ? 'Prediction Results' : 'Upload Item'}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', py: 2 }}>
-            {!prediction && (
+            {!prediction && !similarItem && (
               <input
                 type="file"
                 onChange={handleFileChange}
@@ -135,27 +170,27 @@ function UploadDialog({ open, onClose, onFileChange, file, onItemAdded }) {
               <CircularProgress sx={{ my: 2 }} />
             )}
 
-            {prediction && (
-              <Box sx={{ width: '100%' }}>
-                <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 2 }}>
-                  Predictions
+            {similarItem && (
+              <>
+                <Typography color="warning.main" sx={{ mb: 2 }}>
+                  Item is already in your closet with file name {similarItem.filename} and similar attributes:
                 </Typography>
-                {Object.entries(prediction).map(([key, value]) => (
-                  <PredictionLabel key={key}>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}:
-                    </Typography>
-                    <Typography variant="body1">
-                      {value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                    </Typography>
-                  </PredictionLabel>
-                ))}
-              </Box>
+                {renderPredictions(similarItem.predictions, 'Existing Item Attributes')}
+              </>
+            )}
+
+            {prediction && (
+              <>
+                <Typography color="success.main" sx={{ mb: 2 }}>
+                  Successfully processed {prediction.filename}
+                </Typography>
+                {renderPredictions(prediction.predictions, 'Predictions')}
+              </>
             )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, justifyContent: 'center' }}>
-          {prediction ? (
+          {(prediction || similarItem) ? (
             <Button 
               onClick={handleClose} 
               variant="contained" 
