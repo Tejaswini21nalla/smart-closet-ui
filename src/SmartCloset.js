@@ -116,7 +116,27 @@ function AppContent() {
     }}>
       <AppBar position="static" sx={{ backgroundColor: 'white', color: 'black' }}>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h5" 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontFamily: "'Playfair Display', serif",
+              fontStyle: 'italic',
+              fontWeight: 700,
+              background: 'linear-gradient(45deg, #1a237e 30%, #0d47a1 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '2px',
+              fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2rem' },
+              textTransform: 'capitalize',
+              '& span': {
+                fontFamily: "'Playfair Display', serif",
+                fontStyle: 'normal',
+                fontWeight: 900
+              }
+            }}
+          >
             Smart Closet
           </Typography>
           <Box sx={{ 
