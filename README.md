@@ -20,22 +20,18 @@ This is the frontend application for the Smart Closet Project, a full-stack appl
   - Upload and categorize clothing items
   - Tag items with attributes (color, style, season, etc.)
 
-
 - **Smart Outfit Planning**
   - Get outfit suggestions
   - Plan outfits for upcoming events
 
 - **Wardrobe Analytics**
-  - View usage statistics for clothing items
-  - Identify most/least worn items
-  - Track wardrobe value and composition
+  - Identify similar clothing items already present in the wardrobe
 
 ### Technical Features
 - Modern and responsive user interface
 - React-based frontend with Redux state management
 - RESTful API integration with backend
-- Secure authentication and data storage
-- Real-time weather data integration
+- Data storage
 
 ## Getting Started
 
