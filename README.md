@@ -1,4 +1,4 @@
-# Frontend Application
+# Smart Closet App
 
 This is the frontend application for the FullStack Capstone Project.
 
@@ -14,7 +14,7 @@ This is the frontend application for the FullStack Capstone Project.
 1. Clone the repository
 ```bash
 git clone https://github.com/Tejaswini21nalla/smart-closet-ui.git
-cd frontend
+cd smart-closet-ui
 ```
 
 2. Install dependencies
